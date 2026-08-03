@@ -1,0 +1,68 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+' ── STYLING ──
+skinparam actorStyle stickman
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #2C3E50
+  FontColor #000000
+  FontSize 12
+  FontStyle bold
+}
+
+skinparam usecase {
+  BackgroundColor #E08283
+  BorderColor #2C3E50
+  FontColor #000000
+  FontSize 11
+  FontStyle bold
+}
+
+skinparam rectangle {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  BorderThickness 1.5
+}
+
+' ── ACTORS LEFT ──
+actor "Member" as member
+actor "HR Administrator" as admin
+
+' ── SYSTEM BOUNDARY ──
+rectangle "HR GameChanger" {
+  usecase "Register for\nSession" as UC_Register
+  usecase "Secure Payment\nHandshake" as UC_Payment
+  usecase "Interact/Manage\nAi Chatbot" as UC_Chatbot
+  usecase "View Analytics\nDashboard" as UC_Analytics
+  usecase "Manage\nMembers Profile" as UC_Profile
+  usecase "Validate Session\nAttendance" as UC_Attendance
+  usecase "Generate Report" as UC_Report
+}
+
+' ── ACdTORS RIGHT ──
+actor "AI Chatbot" as bot
+actor "Payment Gateway" as payment
+
+' ── MEMBER CONNECTIONS ──
+member -- UC_Register
+member -- UC_Analytics
+member -- UC_Profile
+
+' ── HR ADMIN CONNECTIONS ──
+admin -- UC_Chatbot
+admin -- UC_Analytics
+admin -- UC_Profile
+admin -- UC_Attendance
+admin -- UC_Report
+
+' ── RIGHT ACTOR CONNECTIONS ──
+UC_Chatbot -- bot
+UC_Payment -- payment
+
+' ── DOTTED LINK ──
+UC_Register .. UC_Payment
+
+@endl
