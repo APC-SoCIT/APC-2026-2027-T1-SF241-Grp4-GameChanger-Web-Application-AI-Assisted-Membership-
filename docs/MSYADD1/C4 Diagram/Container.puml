@@ -1,0 +1,78 @@
+@startuml
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+skinparam ArrowColor #555555
+skinparam ArrowThickness 1.1
+skinparam ArrowFontSize 9
+skinparam ArrowFontColor #444444
+
+title <b>Container Diagram — HR GameChanger</b>\n
+
+' ── PEOPLE ──
+actor "Member" as MEM #1168BD
+actor "HR Admin" as HR #1168BD
+
+' ── EXTERNAL ──
+rectangle "**Zoom**\n<size:9>Sends session\nmetadata via API</size>" as ZOOM #999999
+rectangle "**HitPay**\n<size:9>Payment Gateway\nGCash / Credit Card</size>" as HP #999999
+rectangle "**Gemini API**\n<size:9>AI Session\nRecommendation Engine</size>" as GEM #999999
+rectangle "**Database**\n<size:9>Stores members, sessions,\npayments, reports</size>" as DB #999999
+
+package "HR GameChanger System" #EBEBEB {
+
+  rectangle "**Web Application**\n<size:9>[Next.js + Tailwind CSS]\nDelivers all pages including\nManage Profile, View Member,\nJoin Session, View Dashboard,\nManage Session, Generate Report,\nSuggest Session, and\nProcess Payment UI.</size>" as WEB #1168BD
+
+  rectangle "**Authentication Module**\n<size:9>[NextAuth.js + Supabase Auth]\nHandles secure login for\nMembers and HR Admins.\nEnforces role-based access\nbetween member portal\nand admin dashboard.</size>" as AUTH #1168BD
+
+  rectangle "**Profile Module**\n<size:9>[Next.js API Routes]\nHandles Manage Profile\nand View Member use cases.\nAllows members and HR to\nupdate and retrieve member\nprofile information.</size>" as PROF #1168BD
+
+  rectangle "**Session Module**\n<size:9>[Next.js API Routes + Zoom API]\nHandles Manage Session\nuse case. Receives session\nmetadata from Zoom API.\nManages session parameters,\nschedules, and availability.</size>" as SESS #1168BD
+
+  rectangle "**Join Session Module**\n<size:9>[Next.js API Routes]\nHandles Join Session use case.\nChecks payment status before\ngranting Zoom access.\nBlocks unpaid members and\nredirects to payment flow.</size>" as JOIN #1168BD
+
+  rectangle "**Payment Module**\n<size:9>[Next.js + HitPay SDK]\nHandles Process Payment\nuse case. Generates order\nreference ID, calls HitPay API,\nreceives and validates webhook,\nupdates member session\nstatus to Paid.</size>" as PAY #1168BD
+
+  rectangle "**Dashboard Module**\n<size:9>[Next.js + Chart.js]\nHandles View Dashboard\nuse case. Displays graphs,\ncharts, attendance summaries,\nand renders AI session\nsuggestions from Gemini API.</size>" as DASH #1168BD
+
+  rectangle "**Report Module**\n<size:9>[Next.js API Routes]\nHandles Generate Report\nuse case. Compiles attendance,\nregistration, and training\ndata into exportable reports.</size>" as REP #1168BD
+
+  rectangle "**AI Suggestion Module**\n<size:9>[Next.js + Gemini API]\nHandles Suggest Session\nuse case. Receives triggers\nwhen member joins a session.\nQueries Gemini API for\npersonalized suggestions\nrendered on the dashboard.</size>" as AI #1168BD
+
+}
+
+' ── USER TO WEB ──
+MEM --> WEB : "Profile, Join Session,\nDashboard, Payment [HTTPS]"
+HR --> WEB : "View Member, Sessions,\nReports [HTTPS]"
+
+' ── WEB TO MODULES ──
+WEB --> AUTH : "Login and\nrole enforcement"
+WEB --> PROF : "Manage Profile\nand View Member"
+WEB --> SESS : "Manage Session"
+WEB --> JOIN : "Join Session"
+WEB --> PAY : "Process Payment"
+WEB --> DASH : "View Dashboard"
+WEB --> REP : "Generate Report"
+WEB --> AI : "Suggest Session"
+
+' ── MODULE TO MODULE ──
+JOIN --> PAY : "Redirects to payment\nif session is paid"
+PAY --> JOIN : "Unlocks Join Session\nbutton on success"
+AI --> DASH : "Injects AI session\nsuggestions"
+REP --> DASH : "Extends dashboard\nwith reports"
+
+' ── MODULE TO EXTERNAL ──
+AUTH --> DB : "Validates credentials"
+PROF --> DB : "Reads and writes\nprofile records"
+SESS --> ZOOM : "Receives session\nmetadata from Zoom"
+SESS --> DB : "Updates session records"
+JOIN --> DB : "Checks payment status\nand session availability"
+PAY --> HP : "Generates payment request;\nreceives webhook"
+PAY --> DB : "Updates transaction\nstatus to Paid"
+DASH --> DB : "Retrieves analytics\nand training data"
+REP --> DB : "Retrieves attendance\nand session data"
+AI --> GEM : "Sends user and\nsession context"
+AI --> DB : "Queries participant\nsession history"
+
+@enduml

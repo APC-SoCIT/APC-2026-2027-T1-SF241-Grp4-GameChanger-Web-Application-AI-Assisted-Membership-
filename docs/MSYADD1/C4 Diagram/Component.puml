@@ -1,0 +1,164 @@
+@startuml
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+skinparam ArrowColor #555555
+skinparam ArrowThickness 1.1
+skinparam ArrowFontSize 9
+skinparam ArrowFontColor #333333
+
+title <b>Component Diagram — HR GameChanger</b>\n<size:10>(Internal Components per Use Case)</size>\n
+
+' ── EXTERNAL ──
+database "**Database**\n<size:9>Member, Session,\nPayment, Report records</size>" as DB #999999
+rectangle "**Zoom API**\n<size:9>Session metadata</size>" as ZOOM #999999
+rectangle "**HitPay API**\n<size:9>Payment Gateway</size>" as HP #999999
+rectangle "**Gemini API**\n<size:9>AI Recommendation</size>" as GEM #999999
+rectangle "**Web Application**\n<size:9>[Next.js Frontend]</size>" as WEB #1168BD
+
+' ══════════════════════════════
+' UC1 + UC2 — PROFILE MANAGEMENT
+' ══════════════════════════════
+package "Profile Management\n(UC: Manage Profile, View Member)" #E3F0FF {
+
+  component "**Profile Controller**\n<size:9>[Next.js API Route]\nHandles profile read and\nupdate requests. Validates\nrequired fields. Saves updated\nprofile to the database.\nSends confirmation response.</size>" as PROF_CTRL #1168BD
+
+  component "**Member Search Component**\n<size:9>[Next.js API Route]\nHandles View Member logic.\nSearches and filters registered\nmembers by name or criteria.\nRetrieves and displays\nselected member profile.</size>" as MEM_SEARCH #1168BD
+
+}
+
+' ══════════════════════════════
+' UC5 — SESSION MANAGEMENT
+' ══════════════════════════════
+package "Session Management\n(UC: Manage Session)" #E8F5E9 {
+
+  component "**Zoom Integration Service**\n<size:9>[Python / Next.js API Route]\nCommunicates with Zoom API\nto receive session metadata\nand schedule information.\nUpdates session records\nin the database.</size>" as ZOOM_SVC #1168BD
+
+  component "**Session Controller**\n<size:9>[Next.js API Route]\nManages session parameters\nand schedule configurations.\nExposes session data to\nJoin Session and\ndashboard modules.</size>" as SESS_CTRL #1168BD
+
+}
+
+' ══════════════════════════════
+' UC4 — JOIN SESSION
+' ══════════════════════════════
+package "Join Session\n(UC: Join Session)" #FFF8E1 {
+
+  component "**Join Session Controller**\n<size:9>[Next.js API Route]\nChecks session configuration\n(price, is_paid flag).\nQueries database for\nmember transaction record.\nVerifies payment status\nbefore granting Zoom access.</size>" as JOIN_CTRL #1168BD
+
+  component "**Payment Verifier**\n<size:9>[Next.js Service]\nChecks if transaction\nstatus = Paid or\nprice == 0 (free session).\nBlocks access and redirects\nto payment if unpaid.\nGenerates Zoom redirect link\non payment confirmation.</size>" as PAY_VERIFY #1168BD
+
+}
+
+' ══════════════════════════════
+' UC8 — PROCESS PAYMENT
+' ══════════════════════════════
+package "Payment Processing\n(UC: Process Payment)" #FCE4EC {
+
+  component "**Payment Controller**\n<size:9>[Next.js + HitPay SDK]\nGenerates order reference ID.\nCalls HitPay API to create\ncheckout session. Sends\ncheckout URL to browser.\nRedirects member to\nHitPay hosted checkout.</size>" as PAY_CTRL #1168BD
+
+  component "**Webhook Handler**\n<size:9>[Next.js API Route]\nReceives real-time webhook\nfrom HitPay. Validates HMAC\nsignature for security.\nUpdates member session\nstatus to Paid in database.\nUnlocks Join Session button.</size>" as WEBHOOK #1168BD
+
+  component "**Receipt Generator**\n<size:9>[Next.js Service]\nGenerates payment confirmation\nreceipt for the member.\nDisplays order reference ID\nand payment summary\nupon successful transaction.</size>" as RECEIPT #1168BD
+
+}
+
+' ══════════════════════════════
+' UC6 — VIEW DASHBOARD
+' ══════════════════════════════
+package "Dashboard\n(UC: View Dashboard)" #F3E5F5 {
+
+  component "**Dashboard Controller**\n<size:9>[Next.js API Route]\nVerifies user access rights.\nRetrieves analytics data\nfrom the database.\nServes charts, attendance\nsummaries, and training\nstatistics to the frontend.</size>" as DASH_CTRL #1168BD
+
+  component "**Chart Renderer**\n<size:9>[Next.js + Chart.js]\nRenders bar charts, donut\ncharts, and trend lines\nfor attendance, participation,\nand training performance\ndata on the dashboard.</size>" as CHART #1168BD
+
+}
+
+' ══════════════════════════════
+' UC3 — GENERATE REPORT
+' ══════════════════════════════
+package "Report Generation\n(UC: Generate Report)" #EDE7F6 {
+
+  component "**Report Controller**\n<size:9>[Next.js API Route]\nReceives report type and\ndate range from HR Admin.\nRetrieves required data\nfrom the database.\nCompiles data into report.</size>" as REP_CTRL #1168BD
+
+  component "**Report Exporter**\n<size:9>[Next.js Service]\nGenerates downloadable\nreport file. Supports\nexport and print actions.\nExtends View Dashboard\nwith detailed report view.</size>" as REP_EXP #1168BD
+
+}
+
+' ══════════════════════════════
+' UC7 — SUGGEST SESSION
+' ══════════════════════════════
+package "AI Session Suggestion\n(UC: Suggest Session)" #FFF3E0 {
+
+  component "**Suggestion Trigger**\n<size:9>[Next.js Service]\nListens for member join\nor completion events.\nRetrieves participant session\nhistory from database.\nPrepares context payload\nfor Gemini API query.</size>" as SUGG_TRIG #1168BD
+
+  component "**Gemini Query Service**\n<size:9>[Next.js + Gemini API]\nSends session context and\nuser preference data to\nGemini API. Receives ranked\nsession suggestions.\nFormats results for\ndashboard rendering.</size>" as GEM_SVC #1168BD
+
+}
+
+' ══════════════════════════════
+' WEB TO CONTROLLERS
+' ══════════════════════════════
+WEB --> PROF_CTRL : "Manage Profile"
+WEB --> MEM_SEARCH : "View Member"
+WEB --> ZOOM_SVC : "Manage Session"
+WEB --> JOIN_CTRL : "Join Session"
+WEB --> PAY_CTRL : "Pay and Register"
+WEB --> DASH_CTRL : "View Dashboard"
+WEB --> REP_CTRL : "Generate Report"
+
+' ══════════════════════════════
+' UC1 + UC2 FLOW
+' ══════════════════════════════
+PROF_CTRL --> DB : "Read / write\nprofile records"
+MEM_SEARCH --> DB : "Search and retrieve\nmember profiles"
+MEM_SEARCH --> PROF_CTRL : "<<include>>\nProfile detail view"
+
+' ══════════════════════════════
+' UC5 FLOW
+' ══════════════════════════════
+ZOOM_SVC --> ZOOM : "Fetch session\nmetadata"
+ZOOM_SVC --> SESS_CTRL : "Pass session data"
+SESS_CTRL --> DB : "Update session records"
+
+' ══════════════════════════════
+' UC4 FLOW
+' ══════════════════════════════
+JOIN_CTRL --> PAY_VERIFY : "Check payment status"
+PAY_VERIFY --> DB : "Query transaction\nstatus record"
+PAY_VERIFY --> PAY_CTRL : "<<include>>\nRedirect to payment\nif unpaid"
+PAY_VERIFY --> ZOOM : "Generate Zoom link\nif paid or free"
+
+' ══════════════════════════════
+' UC8 FLOW
+' ══════════════════════════════
+PAY_CTRL --> HP : "Create HitPay\ncheckout session"
+HP --> WEBHOOK : "Send payment\nwebhook"
+WEBHOOK --> DB : "Update status to Paid;\nunlock Join Session"
+WEBHOOK --> RECEIPT : "Trigger receipt"
+RECEIPT --> WEB : "Display payment\nconfirmation"
+
+' ══════════════════════════════
+' UC6 FLOW
+' ══════════════════════════════
+DASH_CTRL --> DB : "Retrieve analytics\nand training data"
+DASH_CTRL --> CHART : "Pass data for\nchart rendering"
+DASH_CTRL --> GEM_SVC : "<<include>>\nInject AI suggestions"
+DASH_CTRL --> REP_EXP : "<<extend>>\nReport on dashboard"
+
+' ══════════════════════════════
+' UC3 FLOW
+' ══════════════════════════════
+REP_CTRL --> DB : "Retrieve attendance\nand session data"
+REP_CTRL --> REP_EXP : "Pass data\nfor export"
+REP_EXP --> DASH_CTRL : "<<extend>>\nView Dashboard"
+
+' ══════════════════════════════
+' UC7 FLOW
+' ══════════════════════════════
+SUGG_TRIG --> DB : "Query participant\nsession history"
+SUGG_TRIG --> GEM_SVC : "Send context\npayload"
+GEM_SVC --> GEM : "Query Gemini API\nfor suggestions"
+GEM_SVC --> DASH_CTRL : "Render suggestions\non dashboard"
+
+@enduml
