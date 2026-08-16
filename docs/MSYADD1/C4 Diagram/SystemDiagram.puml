@@ -1,0 +1,43 @@
+@startuml
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam ArrowColor #555555
+skinparam ArrowThickness 1.2
+skinparam ArrowFontSize 9
+skinparam ArrowFontColor #444444
+
+title <b>System Context Diagram — HR GameChanger</b>\n
+
+' ── PEOPLE ──
+actor "**Member**\n<size:9>[Person]\nHR practitioner, enthusiast,\nor MSME owner who joins\nsessions, manages profile,\nand views dashboard.</size>" as MEM #1168BD
+
+actor "**HR Admin**\n<size:9>[Person]\nManages sessions, views\nmember profiles, generates\nreports, and monitors\ntraining activities.</size>" as HR #1168BD
+
+' ── MAIN SYSTEM ──
+rectangle "**HR GameChanger**\n<size:9>[System]\nWeb-based membership\nand training management\nportal. Manages sessions,\nprofiles, payments, reports,\nand AI recommendations\nfor HR Calabarzon Group, Inc.</size>" as GC #1168BD
+
+' ── EXTERNAL SYSTEMS ──
+rectangle "**Zoom Platform**\n<size:9>[External System]\nVideo conferencing platform.\nSends session metadata\nand attendance info\nto the system.</size>" as ZOOM #999999
+
+rectangle "**HitPay Gateway**\n<size:9>[External System]\nPayment gateway supporting\nGCash and Credit Card.\nProcesses admission fees\nfor paid training sessions.</size>" as HP #999999
+
+rectangle "**Google Gemini API**\n<size:9>[External System]\nAI engine that evaluates\nparticipant preferences\nand session context to\nsuggest personalized sessions.</size>" as GEM #999999
+
+' ── RELATIONSHIPS ──
+MEM --> GC : "Manages profile,\njoins sessions,\nviews dashboard,\npays fees [HTTPS]"
+
+HR --> GC : "Views members,\nmanages sessions,\ngenerates reports\n[HTTPS]"
+
+GC --> MEM : "Displays dashboard,\ncertificates, and\nAI session suggestions\n[HTTPS]"
+
+GC --> HR : "Shows member list,\nanalytics, and\ngenerated reports\n[HTTPS]"
+
+ZOOM --> GC : "Sends session metadata\nand schedule info\n[Zoom API]"
+
+GC --> HP : "Initiates payment request;\nreceives webhook on\npayment confirmation\n[REST API / Webhook]"
+
+GC --> GEM : "Sends session context\nand user data; receives\nAI session suggestions\n[REST API]"
+
+@enduml
