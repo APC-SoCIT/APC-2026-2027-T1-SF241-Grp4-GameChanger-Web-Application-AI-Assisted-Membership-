@@ -1,0 +1,118 @@
+@startuml
+left to right direction
+
+skinparam packageStyle folder 
+skinparam linetype ortho
+Title HR Game Changer
+
+
+skinparam backgroundColor #FFFFFF
+skinparam linetype ortho
+skinparam shadowing true
+
+
+
+skinparam usecase {
+    BackgroundColor #F28B82
+    BorderColor #C0392B
+    FontColor #000000
+    FontStyle bold
+    FontSize 11
+    BorderThickness 2
+}
+
+
+skinparam actor {
+    BackgroundColor #FFFFFF
+    BorderColor #1A1D27
+    FontColor #1A1D27
+    FontSize 11
+    FontStyle bold
+}
+
+
+skinparam rectangle {
+    BackgroundColor #FAFAFA
+    BorderColor #555555
+    BorderThickness 2
+}
+
+
+skinparam ArrowColor #333333
+skinparam ArrowThickness 1.2
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #444444
+skinparam ArrowFontStyle italic
+
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+}
+
+
+actor "Member" as member
+actor "HR Admin" as hr_admin
+
+actor "Ai\n(Gemini API)" as ai
+actor "Zoom" as zoom
+actor "Hitpay" as hitpay
+
+
+member -[hidden]right-> ai
+hr_admin -[hidden]right-> hitpay
+zoom -[hidden]right-> hitpay
+
+
+rectangle  {
+   
+    usecase "Manage Session" as UC1
+    usecase "Join Session" as UC2
+    usecase "Process Payment" as UC3
+    usecase "View Analytic Dashboard" as UC4
+    usecase "Manage Member Profile" as UC5
+    usecase "Generate Report/Certificate" as UC6
+    usecase "View Member" as UC7
+    
+    
+    usecase "Interact AI-Chatbot" as UC8
+
+   
+    UC1 -[hidden]right-> UC2
+    UC2 -[hidden]right-> UC3
+    UC3 -[hidden]right-> UC4
+    UC4 -[hidden]right-> UC5
+    UC5 -[hidden]right-> UC6
+    UC6 -[hidden]right-> UC7
+
+  
+    UC1 -[hidden]down-> UC8
+}
+
+member --> UC1
+member --> UC2
+member --> UC3
+member --> UC4
+member --> UC5
+member --> UC6
+
+hr_admin --> UC1
+hr_admin --> UC2
+hr_admin --> UC4
+hr_admin --> UC5
+hr_admin --> UC6
+hr_admin --> UC7
+
+
+UC8 <-- ai
+UC1 -- zoom
+UC3 -- hitpay
+
+
+UC2 .> UC1 : <<extend>>
+UC2 .> UC8 : <<extend>>
+UC2 .> UC3 : <<include>>
+UC8 .> UC4 : <<include>>
+UC6 .> UC4 : <<extend>>
+UC5 .> UC7 : <<include>>
+
+@enduml
