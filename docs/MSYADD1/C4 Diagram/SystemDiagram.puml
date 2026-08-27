@@ -11,33 +11,39 @@ skinparam ArrowFontColor #444444
 title <b>System Context Diagram — HR GameChanger</b>\n
 
 ' ── PEOPLE ──
-actor "**Member**\n<size:9>[Person]\nHR practitioner, enthusiast,\nor MSME owner who joins\nsessions, manages profile,\nand views dashboard.</size>" as MEM #1168BD
+actor "**Member**\n<size:9>[Person]\nHR practitioner, enthusiast,\nor MSME owner who joins sessions,\nprocesses payments, views the\nAnalytic Dashboard, downloads\ne-certificates, and manages\ntheir member profile." as MEM #1168BD
 
-actor "**HR Admin**\n<size:9>[Person]\nManages sessions, views\nmember profiles, generates\nreports, and monitors\ntraining activities.</size>" as HR #1168BD
+actor "**HR Admin**\n<size:9>[Person]\nManages sessions, manages\npayments, views member profiles,\ngenerates reports, and monitors\nall training activities." as HR #1168BD
 
 ' ── MAIN SYSTEM ──
-rectangle "**HR GameChanger**\n<size:9>[System]\nWeb-based membership\nand training management\nportal. Manages sessions,\nprofiles, payments, reports,\nand AI recommendations\nfor HR Calabarzon Group, Inc.</size>" as GC #1168BD
+rectangle "**HR GameChanger**\n<size:9>[System]\nWeb-based membership and\ntraining management portal\nfor HR Calabarzon Group, Inc.\nHandles session management,\npayments, e-certificates,\nanalytic dashboard, member\nprofiles, reports, and\nAI-powered chatbot." as GC #1168BD
 
 ' ── EXTERNAL SYSTEMS ──
-rectangle "**Zoom Platform**\n<size:9>[External System]\nVideo conferencing platform.\nSends session metadata\nand attendance info\nto the system.</size>" as ZOOM #999999
+rectangle "**Zoom API**\n<size:9>[External System]\nVideo conferencing platform.\nSends session metadata\nand schedule information\nto the system." as ZOOM #999999
 
-rectangle "**HitPay Gateway**\n<size:9>[External System]\nPayment gateway supporting\nGCash and Credit Card.\nProcesses admission fees\nfor paid training sessions.</size>" as HP #999999
+rectangle "**HitPay Gateway**\n<size:9>[External System]\nPayment gateway supporting\nGCash and Credit Card.\nProcesses admission fees\nfor paid training sessions\nand manages payment records." as HP #999999
 
-rectangle "**Google Gemini API**\n<size:9>[External System]\nAI engine that evaluates\nparticipant preferences\nand session context to\nsuggest personalized sessions.</size>" as GEM #999999
+rectangle "**AI (Gemini API)**\n<size:9>[External System]\nAI engine that evaluates\nuser preferences and session\ncontext to suggest personalized\nsessions via the chatbot." as GEM #999999
 
-' ── RELATIONSHIPS ──
-MEM --> GC : "Manages profile,\njoins sessions,\nviews dashboard,\npays fees [HTTPS]"
+' ── MEMBER RELATIONSHIPS ──
+MEM --> GC : "Joins session,\nprocesses payment,\nviews Analytic Dashboard,\ndownloads e-certificate,\nmanages member profile\n[HTTPS]"
 
-HR --> GC : "Views members,\nmanages sessions,\ngenerates reports\n[HTTPS]"
+GC --> MEM : "Displays Analytic Dashboard,\ne-certificates, AI chatbot\nrecommendations, session\naccess via Zoom\n[HTTPS]"
 
-GC --> MEM : "Displays dashboard,\ncertificates, and\nAI session suggestions\n[HTTPS]"
+' ── HR ADMIN RELATIONSHIPS ──
+HR --> GC : "Manages session,\nmanages payment,\ngenerates report,\nviews member profiles\n[HTTPS]"
 
-GC --> HR : "Shows member list,\nanalytics, and\ngenerated reports\n[HTTPS]"
+GC --> HR : "Shows member list,\nanalytics, payment records,\ngenerated reports\n[HTTPS]"
 
-ZOOM --> GC : "Sends session metadata\nand schedule info\n[Zoom API]"
+' ── EXTERNAL SYSTEM RELATIONSHIPS ──
+ZOOM --> GC : "Sends session metadata\nand schedule info;\nprovides Zoom room\nfor Join Session\n[Zoom API]"
 
-GC --> HP : "Initiates payment request;\nreceives webhook on\npayment confirmation\n[REST API / Webhook]"
+GC --> HP : "Initiates payment request\nfor Process Payment;\nreceives webhook on\npayment confirmation\n[REST API / Webhook]"
 
-GC --> GEM : "Sends session context\nand user data; receives\nAI session suggestions\n[REST API]"
+HP --> GC : "Sends payment confirmation\nwebhook; updates payment\nstatus for Manage Payment\n[Webhook]"
+
+GC --> GEM : "Sends session context\nand user data for\nInteract AI Chatbot;\nreceives personalized\nsession suggestions\n[REST API]"
+
+GEM --> GC : "Returns AI-generated\nsession recommendations\nfor the Analytic Dashboard\n[REST API]"
 
 @enduml
