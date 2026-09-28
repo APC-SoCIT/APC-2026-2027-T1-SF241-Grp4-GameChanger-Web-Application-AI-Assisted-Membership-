@@ -7,37 +7,34 @@ skinparam ArrowColor #555555
 skinparam ArrowThickness 1.2
 skinparam ArrowFontSize 9
 skinparam ArrowFontColor #444444
+skinparam shadowing false
 
 title <b>System Context Diagram — HR GameChanger</b>\n
 
 ' ── PEOPLE ──
-actor "**Member**\n<size:9>[Person]\nHR practitioner, enthusiast,\nor MSME owner who joins\nsessions, manages profile,\nand views dashboard.</size>" as MEM #1168BD
+actor "**Member**\n<size:9>[Person]\nJoins sessions, processes\npayments, views dashboard,\nand manages profile.</size>" as MEM #1168BD
 
-actor "**HR Admin**\n<size:9>[Person]\nManages sessions, views\nmember profiles, generates\nreports, and monitors\ntraining activities.</size>" as HR #1168BD
+actor "**HR Admin**\n<size:9>[Person]\nManages sessions, views\nmember profiles, generates\nreports, and joins sessions.</size>" as HR #1168BD
 
 ' ── MAIN SYSTEM ──
-rectangle "**HR GameChanger**\n<size:9>[System]\nWeb-based membership\nand training management\nportal. Manages sessions,\nprofiles, payments, reports,\nand AI recommendations\nfor HR Calabarzon Group, Inc.</size>" as GC #1168BD
+rectangle "**HR GameChanger**\n<size:9>[System]\nWeb-based portal for\nHR Calabarzon Group, Inc.\nHandles session management,\npayments, profiles, reports,\nand AI-based recommendations.</size>" as GC #1168BD
 
 ' ── EXTERNAL SYSTEMS ──
-rectangle "**Zoom Platform**\n<size:9>[External System]\nVideo conferencing platform.\nSends session metadata\nand attendance info\nto the system.</size>" as ZOOM #999999
+rectangle "**Zoom**\n<size:9>[External System]\nProvides session metadata\nand schedule information\nto the system.</size>" as ZOOM #999999
 
-rectangle "**HitPay Gateway**\n<size:9>[External System]\nPayment gateway supporting\nGCash and Credit Card.\nProcesses admission fees\nfor paid training sessions.</size>" as HP #999999
+rectangle "**HitPay**\n<size:9>[External System]\nProcesses admission fee\npayments via GCash\nand Credit Card checkout.</size>" as HP #999999
 
-rectangle "**Google Gemini API**\n<size:9>[External System]\nAI engine that evaluates\nparticipant preferences\nand session context to\nsuggest personalized sessions.</size>" as GEM #999999
+rectangle "**AI (Gemini API)**\n<size:9>[External System]\nAnalyzes session data\nand user activity to\ngenerate personalized\nsession recommendations.</size>" as GEM #999999
 
 ' ── RELATIONSHIPS ──
-MEM --> GC : "Manages profile,\njoins sessions,\nviews dashboard,\npays fees [HTTPS]"
+MEM --> GC : "Joins sessions,\npays fees, views\ndashboard, manages profile\n[HTTPS]"
 
-HR --> GC : "Views members,\nmanages sessions,\ngenerates reports\n[HTTPS]"
+HR --> GC : "Manages sessions,\nviews members,\ngenerates reports\n[HTTPS]"
 
-GC --> MEM : "Displays dashboard,\ncertificates, and\nAI session suggestions\n[HTTPS]"
+ZOOM --> GC : "Sends session\nmetadata and\nschedule info\n[Zoom API]"
 
-GC --> HR : "Shows member list,\nanalytics, and\ngenerated reports\n[HTTPS]"
+GC --> HP : "Redirects member\nto payment checkout;\nreceives payment\nconfirmation webhook\n[REST API]"
 
-ZOOM --> GC : "Sends session metadata\nand schedule info\n[Zoom API]"
-
-GC --> HP : "Initiates payment request;\nreceives webhook on\npayment confirmation\n[REST API / Webhook]"
-
-GC --> GEM : "Sends session context\nand user data; receives\nAI session suggestions\n[REST API]"
+GC --> GEM : "Sends session context\nand user data;\nreceives AI session\nrecommendations\n[REST API]"
 
 @enduml
