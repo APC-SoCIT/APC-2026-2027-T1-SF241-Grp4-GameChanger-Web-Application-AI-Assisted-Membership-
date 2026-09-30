@@ -1,0 +1,269 @@
+@startuml
+
+
+skinparam backgroundColor #10121A
+skinparam defaultFontName Arial
+skinparam defaultFontColor #E8E8ED
+skinparam defaultFontSize 10
+skinparam shadowing false
+skinparam roundCorner 14
+skinparam linetype ortho
+skinparam nodesep 14
+skinparam ranksep 30
+
+skinparam ArrowFontColor #C9CDD6
+skinparam ArrowFontSize 9
+skinparam ArrowThickness 1.3
+
+skinparam package {
+  FontColor #F0F0F5
+  FontSize 12
+  FontStyle bold
+  BorderThickness 1.6
+  BackgroundColor #171A24
+}
+
+skinparam class {
+  FontColor #FFFFFF
+  FontSize 10
+  FontStyle bold
+  AttributeFontColor #E9E9EE
+  AttributeFontSize 9
+  AttributeFontStyle plain
+  StereotypeFontColor #FFFFFF
+  StereotypeFontSize 8
+  BorderThickness 1.2
+}
+skinparam interface {
+  FontColor #FFFFFF
+  FontSize 10
+  FontStyle bold
+  AttributeFontColor #E9E9EE
+  AttributeFontSize 9
+  StereotypeFontColor #FFFFFF
+  BorderThickness 1.2
+}
+skinparam enum {
+  FontColor #FFFFFF
+  FontSize 10
+  FontStyle bold
+  AttributeFontColor #E9E9EE
+  AttributeFontSize 9
+  StereotypeFontColor #FFFFFF
+  BorderThickness 1.2
+}
+
+title <b><size:15><color:#FFFFFF>C4 MODEL — LEVEL 4 (CODE DIAGRAM)</color></size></b>\n<b><size:19><color:#FFFFFF>HR GameChanger: Manage Session Use Case</color></size></b>\n<back:#3B3F8C><color:#FFFFFF>  Next.js 15 API Routes  </color></back>  <back:#1E6E62><color:#FFFFFF>  Supabase / PostgreSQL  </color></back>  <back:#8A5A1E><color:#FFFFFF>  Zoom API Integration  </color></back>\n
+
+package "PACKAGE 1: PRESENTATION & REST API CONTROLLERS  (Next.js API Routes)" #1E1830;line:9D7BF0 {
+
+  class "SessionController" as SESS_CTRL <<REST Controller>> #6C4FD1;line:B49CFA;text:FFFFFF {
+    + listSessions(filters): SessionSummaryDTO[]
+    + createSession(payload: NewSessionDTO): SessionDTO
+    + updateSession(sessionId: UUID, payload): SessionDTO
+    + cancelSession(sessionId: UUID): void
+    + syncWithZoom(sessionId: UUID): SessionDTO
+  }
+
+  class "SessionRegistrationController" as REG_CTRL <<REST Controller>> #6C4FD1;line:B49CFA;text:FFFFFF {
+    + getSessionDetail(sessionId: UUID): SessionDetailDTO
+    + registerForSession(sessionId, memberId): RegistrationDTO
+    + joinSession(sessionId, memberId): ZoomAccessDTO
+  }
+
+  class "CareerPathController" as CP_CTRL <<REST Controller>> #6C4FD1;line:B49CFA;text:FFFFFF {
+    + getSkillTree(memberId: UUID): CareerPathDTO
+    + syncProgress(memberId, sessionId: UUID): CareerPathDTO
+  }
+}
+
+package "PACKAGE 2: APPLICATION SUPPORT SERVICES  (Middleware / Cross-Cutting)" #103331;line:2FD9C4 {
+
+  class "ZoomWebhookHandler" as ZOOM_HOOK <<Service>> #17958A;line:2FD9C4;text:FFFFFF {
+    + handleSessionEndedEvent(payload: ZoomWebhookPayload): void
+    + verifySignature(payload): boolean
+  }
+
+  class "AttendanceCsvFallbackService" as CSV_FALLBACK <<Service>> #17958A;line:2FD9C4;text:FFFFFF {
+    + uploadAttendanceCsv(sessionId: UUID, file): void
+  }
+
+  class "SessionNotificationService" as NOTIFY_SVC <<Service>> #17958A;line:2FD9C4;text:FFFFFF {
+    + sendReminder(registrationId: UUID, offsetMin: number): void
+    + pushUnreadBadge(memberId: UUID): void
+  }
+}
+
+package "PACKAGE 3: DOMAIN SERVICE LAYER  (Business Logic)" #0F2B18;line:3FCB6B {
+
+  class "SessionService" as SESS_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + createSession(data: NewSessionDTO): Session
+    + updateSession(id: UUID, changes): Session
+    + cancelSession(id: UUID): void
+  }
+
+  class "RegistrationService" as REG_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + register(sessionId, memberId: UUID): Registration
+    + checkPaymentGate(sessionId, memberId: UUID): boolean
+    + joinSession(registrationId: UUID): ZoomAccess
+  }
+
+  class "CareerPathService" as CP_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + getSkillTree(memberId: UUID): CareerPathNode[]
+    + recalculateProgress(memberId, sessionId): void
+    + unlockNextNode(nodeId: UUID): void
+  }
+
+  class "AttendanceService" as ATT_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + recordAttendance(sessionId, memberId, pct): AttendanceRecord
+    + flagCertificateEligible(recordId: UUID): void
+  }
+}
+
+package "PACKAGE 4: DOMAIN ENTITIES, VALUE OBJECTS & ENUMS  (Domain Model)" #331F0F;line:E8973B {
+
+  class "Session" as SESSION <<Aggregate Root>> #B5651D;line:E8973B;text:FFFFFF {
+    - id: UUID
+    - title: string
+    - scheduledAt: Date
+    - durationMinutes: number
+    - price: number
+    - zoomMeetingId: string
+    - status: SessionStatus
+    - skillNodeId: UUID
+    --
+    + cancel(): void
+    + syncZoomMetadata(meta: ZoomMeta): void
+  }
+
+  class "Registration" as REGISTRATION <<Entity>> #A65E22;line:E8973B;text:FFFFFF {
+    - id: UUID
+    - sessionId: UUID
+    - memberId: UUID
+    - status: RegistrationStatus
+    - registeredAt: Date
+  }
+
+  class "AttendanceRecord" as ATT_RECORD <<Entity>> #A65E22;line:E8973B;text:FFFFFF {
+    - id: UUID
+    - sessionId: UUID
+    - memberId: UUID
+    - attendancePercent: number
+    - certificateEligible: boolean
+  }
+
+  class "CareerPathNode" as CP_NODE <<Entity>> #A65E22;line:E8973B;text:FFFFFF {
+    - id: UUID
+    - memberId: UUID
+    - skillId: UUID
+    - progressPercent: number
+    - status: NodeStatus
+  }
+
+  enum "SessionStatus" as SESS_STATUS_ENUM <<Enum>> #8C5A2E;line:E8973B;text:FFFFFF {
+    DRAFT
+    SCHEDULED
+    LIVE
+    COMPLETED
+    CANCELLED
+  }
+
+  enum "RegistrationStatus" as REG_STATUS_ENUM <<Enum>> #8C5A2E;line:E8973B;text:FFFFFF {
+    PENDING_PAYMENT
+    CONFIRMED
+    ATTENDED
+  }
+
+  enum "NodeStatus" as NODE_STATUS_ENUM <<Enum>> #8C5A2E;line:E8973B;text:FFFFFF {
+    LOCKED
+    IN_PROGRESS
+    COMPLETED
+  }
+}
+
+package "PACKAGE 5: INFRASTRUCTURE, REPOSITORIES & EXTERNAL ADAPTERS  ()" #1B222B;line:6FA8C9 {
+
+  interface "ISessionRepository" as ISESS_REPO <<Interface>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + findById(id: UUID): Session
+    + search(filters): Session[]
+    + save(session: Session): void
+  }
+
+  class "SupabaseSessionRepository" as SUPA_SESS_REPO <<Repository>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + findById(id: UUID): Session
+    + search(filters): Session[]
+    + save(session: Session): void
+  }
+
+  interface "IAttendanceRepository" as IATT_REPO <<Interface>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + save(record: AttendanceRecord): void
+    + findBySession(sessionId: UUID): AttendanceRecord[]
+  }
+
+  class "SupabaseAttendanceRepository" as SUPA_ATT_REPO <<Repository>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + save(record: AttendanceRecord): void
+    + findBySession(sessionId: UUID): AttendanceRecord[]
+  }
+
+  class "ZoomAPIAdapter" as ZOOM_ADAPTER <<Adapter>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + registerMeeting(session: Session): ZoomMeetingMeta
+    + verifyWebhookSignature(payload): boolean
+  }
+}
+
+' ── Cross-use-case references ──
+class "Manage Payment (UC-03)" as UC03_STUB <<external UC>> #2A2A38;line:6B6B80;text:C9C9D6 {
+}
+class "Manage E-Certificate (UC-05)" as UC05_STUB <<external UC>> #2A2A38;line:6B6B80;text:C9C9D6 {
+}
+class "Interact AI Chatbot (UC-06)" as UC06_STUB <<external UC>> #2A2A38;line:6B6B80;text:C9C9D6 {
+}
+
+' ── Relationships ──
+SESS_CTRL -[#3FCB6B]-> SESS_SVC : "createSession() / updateSession() / cancelSession()"
+SESS_CTRL -[#3FCB6B]-> ZOOM_ADAPTER : "syncWithZoom()"
+REG_CTRL -[#3FCB6B]-> REG_SVC : "register() / joinSession()"
+CP_CTRL -[#3FCB6B]-> CP_SVC : "getSkillTree() / syncProgress()"
+ZOOM_HOOK -[#3FCB6B]-> ATT_SVC : "recordAttendance()"
+ZOOM_HOOK -[#3FCB6B]-> CP_SVC : "recalculateProgress()"
+CSV_FALLBACK -[#3FCB6B]-> ATT_SVC : "recordAttendance() (fallback)"
+REG_SVC .[#F2A93B].> NOTIFY_SVC : "schedule reminder"
+SESS_SVC .[#F2A93B].> SESSION : "creates / mutates"
+REG_SVC .[#F2A93B].> REGISTRATION : "creates / mutates"
+REG_SVC .[#F2A93B].> UC03_STUB : "<<include>> pay for session"
+CP_SVC .[#F2A93B].> CP_NODE : "reads / unlocks"
+ATT_SVC .[#F2A93B].> ATT_RECORD : "creates"
+ATT_SVC .[#F2A93B].> UC05_STUB : "flags cert-eligible"
+UC06_STUB .[#F2A93B].> REG_CTRL : "<<extend>> redirect to register/join"
+SESSION .[#F2A93B].> SESS_STATUS_ENUM
+REGISTRATION .[#F2A93B].> REG_STATUS_ENUM
+CP_NODE .[#F2A93B].> NODE_STATUS_ENUM
+SESS_SVC -[#3FCB6B]-> ISESS_REPO : "findById() / save()"
+REG_SVC -[#3FCB6B]-> ISESS_REPO : "findById()"
+ATT_SVC -[#3FCB6B]-> IATT_REPO : "save() / findBySession()"
+SUPA_SESS_REPO .[#6FA8C9].|> ISESS_REPO : "implementation"
+SUPA_ATT_REPO .[#6FA8C9].|> IATT_REPO : "implementation"
+
+' ── Hidden layout anchors: force Package 1+2 (top row) -> 3 -> 4 -> 5 (bottom), full-width stacking like the reference diagram ──
+SESS_CTRL -[hidden]-> SESS_SVC
+ZOOM_HOOK -[hidden]-> SESS_SVC
+SESS_SVC -[hidden]-> SESSION
+SESSION -[hidden]-> ISESS_REPO
+
+' ── Pin cross-use-case stubs below Package 5 so they don't float mid-diagram ──
+ISESS_REPO -[hidden]-> UC03_STUB
+ISESS_REPO -[hidden]-> UC05_STUB
+ISESS_REPO -[hidden]-> UC06_STUB
+
+legend bottom
+  <b><color:#FFFFFF>DIAGRAM CONVENTIONS & ARCHITECTURAL PATTERNS</color></b>
+  ----
+  <back:#6C4FD1><color:#FFFFFF>   </color></back> Presentation / REST Controller    <back:#17958A><color:#FFFFFF>   </color></back> Application Support Service (cross-cutting)
+  <back:#1C8A46><color:#FFFFFF>   </color></back> Domain Service (business logic)   <back:#B5651D><color:#FFFFFF>   </color></back> Domain Entity / Value Object / Enum
+  <back:#2E5F7A><color:#FFFFFF>   </color></back> Infrastructure / Repository / Adapter    <back:#2A2A38><color:#C9C9D6>   </color></back> Cross-Use-Case Reference
+  ----
+  <color:#3FCB6B>──►</color> Direct Call      <color:#F2A93B>┄┄►</color> Association / Uses (dependency)
+  <color:#6FA8C9>┄┄►</color> Implementation   <color:#E8973B>◆──</color> Composition (owns lifecycle)
+endlegend
+
+@enduml

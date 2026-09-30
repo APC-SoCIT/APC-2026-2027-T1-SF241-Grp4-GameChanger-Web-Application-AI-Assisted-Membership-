@@ -1,0 +1,214 @@
+@startuml
+
+' ══════════════════════════════════════════════════════════
+' DARK THEME — matched to the professor's C4 Level 4 style
+' ══════════════════════════════════════════════════════════
+skinparam backgroundColor #10121A
+skinparam defaultFontName Arial
+skinparam defaultFontColor #E8E8ED
+skinparam defaultFontSize 10
+skinparam shadowing false
+skinparam roundCorner 14
+skinparam linetype ortho
+skinparam nodesep 14
+skinparam ranksep 30
+
+skinparam ArrowFontColor #C9CDD6
+skinparam ArrowFontSize 9
+skinparam ArrowThickness 1.3
+
+skinparam package {
+  FontColor #F0F0F5
+  FontSize 12
+  FontStyle bold
+  BorderThickness 1.6
+  BackgroundColor #171A24
+}
+
+skinparam class {
+  FontColor #FFFFFF
+  FontSize 10
+  FontStyle bold
+  AttributeFontColor #E9E9EE
+  AttributeFontSize 9
+  AttributeFontStyle plain
+  StereotypeFontColor #FFFFFF
+  StereotypeFontSize 8
+  BorderThickness 1.2
+}
+skinparam interface {
+  FontColor #FFFFFF
+  FontSize 10
+  FontStyle bold
+  AttributeFontColor #E9E9EE
+  AttributeFontSize 9
+  StereotypeFontColor #FFFFFF
+  BorderThickness 1.2
+}
+skinparam enum {
+  FontColor #FFFFFF
+  FontSize 10
+  FontStyle bold
+  AttributeFontColor #E9E9EE
+  AttributeFontSize 9
+  StereotypeFontColor #FFFFFF
+  BorderThickness 1.2
+}
+
+title <b><size:15><color:#FFFFFF>C4 MODEL — LEVEL 4 (CODE DIAGRAM)</color></size></b>\n<b><size:19><color:#FFFFFF>HR GameChanger: Manage Payment Use Case</color></size></b>\n<back:#3B3F8C><color:#FFFFFF>  Next.js 15 API Routes  </color></back>  <back:#1E6E62><color:#FFFFFF>  Supabase / PostgreSQL  </color></back>  <back:#8A5A1E><color:#FFFFFF>  HitPay Gateway  </color></back>\n
+
+package "PACKAGE 1: PRESENTATION & REST API CONTROLLERS  (Next.js API Routes)" #1E1830;line:9D7BF0 {
+
+  class "PaymentController" as PAY_CTRL <<REST Controller>> #6C4FD1;line:B49CFA;text:FFFFFF {
+    + getSessionFee(sessionId: UUID): FeeDTO
+    + initiateCheckout(sessionId, memberId: UUID): CheckoutDTO
+  }
+
+  class "PaymentAdminController" as PAY_ADMIN_CTRL <<REST Controller>> #6C4FD1;line:B49CFA;text:FFFFFF {
+    + listTransactions(filters: TxnFilters): TransactionSummaryDTO[]
+    + getTransactionById(txnId: UUID): TransactionDTO
+  }
+
+  class "HitPayWebhookController" as HOOK_CTRL <<REST Controller>> #6C4FD1;line:B49CFA;text:FFFFFF {
+    + receiveWebhook(payload: HitPayWebhookPayload): void
+  }
+}
+
+package "PACKAGE 2: APPLICATION SUPPORT SERVICES  (Middleware / Cross-Cutting)" #103331;line:2FD9C4 {
+
+  class "WebhookSignatureValidator" as SIG_VALID <<Validator>> #17958A;line:2FD9C4;text:FFFFFF {
+    + verifyHmacSignature(payload, secret: string): boolean
+  }
+
+  class "BillingPrivilegeGuard" as BILL_GUARD <<Middleware>> #17958A;line:2FD9C4;text:FFFFFF {
+    + requireBillingAccess(session: AuthSession): void
+  }
+
+  class "PaymentNotificationService" as PAY_NOTIFY <<Service>> #17958A;line:2FD9C4;text:FFFFFF {
+    + sendConfirmationEmail(txnId: UUID): void
+    + sendFailureAlert(txnId: UUID): void
+  }
+}
+
+package "PACKAGE 3: DOMAIN SERVICE LAYER  (Business Logic)" #0F2B18;line:3FCB6B {
+
+  class "PaymentService" as PAY_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + createOrder(sessionId, memberId: UUID): Transaction
+    + markPaid(txnId: UUID, ref: string): void
+    + markFailed(txnId: UUID, reason: string): void
+  }
+
+  class "TransactionQueryService" as TXN_QUERY_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + search(filters: TxnFilters): Transaction[]
+    + getById(txnId: UUID): Transaction
+  }
+
+  class "ReceiptService" as RECEIPT_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + generateReceipt(txnId: UUID): ReceiptDTO
+  }
+}
+
+package "PACKAGE 4: DOMAIN ENTITIES, VALUE OBJECTS & ENUMS  (Domain Model)" #331F0F;line:E8973B {
+
+  class "Transaction" as TXN <<Aggregate Root>> #B5651D;line:E8973B;text:FFFFFF {
+    - id: UUID
+    - sessionId: UUID
+    - memberId: UUID
+    - amount: number
+    - method: PaymentMethod
+    - status: PaymentStatus
+    - referenceNo: string
+    - createdAt: Date
+    --
+    + markPaid(ref: string): void
+    + markFailed(reason: string): void
+  }
+
+  class "Receipt" as RECEIPT <<Value Object>> #A65E22;line:E8973B;text:FFFFFF {
+    - referenceNo: string
+    - amount: number
+    - issuedAt: Date
+  }
+
+  enum "PaymentStatus" as PAY_STATUS_ENUM <<Enum>> #8C5A2E;line:E8973B;text:FFFFFF {
+    PENDING
+    PAID
+    FAILED
+    CANCELLED
+  }
+
+  enum "PaymentMethod" as PAY_METHOD_ENUM <<Enum>> #8C5A2E;line:E8973B;text:FFFFFF {
+    GCASH
+    CARD
+    MAYA
+  }
+}
+
+package "PACKAGE 5: INFRASTRUCTURE, REPOSITORIES & EXTERNAL ADAPTERS  ()" #1B222B;line:6FA8C9 {
+
+  interface "ITransactionRepository" as ITXN_REPO <<Interface>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + findById(id: UUID): Transaction
+    + search(filters): Transaction[]
+    + save(txn: Transaction): void
+  }
+
+  class "SupabaseTransactionRepository" as SUPA_TXN_REPO <<Repository>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + findById(id: UUID): Transaction
+    + search(filters): Transaction[]
+    + save(txn: Transaction): void
+  }
+
+  class "HitPayGatewayAdapter" as HITPAY_ADAPTER <<Adapter>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + createCheckoutSession(order: OrderRef): CheckoutUrl
+    + parseWebhookPayload(raw): HitPayWebhookPayload
+  }
+}
+
+' ── Cross-use-case references ──
+class "Manage Session (UC-02)" as UC02_STUB <<external UC>> #2A2A38;line:6B6B80;text:C9C9D6 {
+}
+class "Manage Dashboard and Reports (UC-04)" as UC04_STUB <<external UC>> #2A2A38;line:6B6B80;text:C9C9D6 {
+}
+
+' ── Relationships ──
+PAY_CTRL -[#3FCB6B]-> PAY_SVC : "createOrder()"
+PAY_CTRL -[#3FCB6B]-> HITPAY_ADAPTER : "createCheckoutSession()"
+PAY_ADMIN_CTRL -[#3FCB6B]-> BILL_GUARD : "requireBillingAccess()"
+PAY_ADMIN_CTRL -[#3FCB6B]-> TXN_QUERY_SVC : "search() / getById()"
+HOOK_CTRL -[#3FCB6B]-> SIG_VALID : "verifyHmacSignature()"
+HOOK_CTRL -[#3FCB6B]-> PAY_SVC : "markPaid() / markFailed()"
+PAY_SVC .[#F2A93B].> PAY_NOTIFY : "on status change"
+PAY_SVC .[#F2A93B].> RECEIPT_SVC : "generate on success"
+UC02_STUB .[#F2A93B].> PAY_CTRL : "<<include>> registration payment gate"
+PAY_SVC .[#F2A93B].> UC04_STUB : "revenue data aggregated by"
+PAY_SVC .[#F2A93B].> TXN : "creates / mutates"
+TXN_QUERY_SVC .[#F2A93B].> TXN : "reads"
+RECEIPT_SVC .[#F2A93B].> RECEIPT : "creates"
+TXN .[#F2A93B].> PAY_STATUS_ENUM
+TXN .[#F2A93B].> PAY_METHOD_ENUM
+PAY_SVC -[#3FCB6B]-> ITXN_REPO : "findById() / save()"
+TXN_QUERY_SVC -[#3FCB6B]-> ITXN_REPO : "search()"
+SUPA_TXN_REPO .[#6FA8C9].|> ITXN_REPO : "implementation"
+
+' ── Hidden layout anchors: force Package 1+2 (top row) -> 3 -> 4 -> 5 (bottom), full-width stacking like the reference diagram ──
+PAY_CTRL -[hidden]-> PAY_SVC
+SIG_VALID -[hidden]-> PAY_SVC
+PAY_SVC -[hidden]-> TXN
+TXN -[hidden]-> ITXN_REPO
+
+' ── Pin cross-use-case stubs below Package 5 so they don't float mid-diagram ──
+ITXN_REPO -[hidden]-> UC02_STUB
+ITXN_REPO -[hidden]-> UC04_STUB
+
+legend bottom
+  <b><color:#FFFFFF>DIAGRAM CONVENTIONS & ARCHITECTURAL PATTERNS</color></b>
+  ----
+  <back:#6C4FD1><color:#FFFFFF>   </color></back> Presentation / REST Controller    <back:#17958A><color:#FFFFFF>   </color></back> Application Support Service (cross-cutting)
+  <back:#1C8A46><color:#FFFFFF>   </color></back> Domain Service (business logic)   <back:#B5651D><color:#FFFFFF>   </color></back> Domain Entity / Value Object / Enum
+  <back:#2E5F7A><color:#FFFFFF>   </color></back> Infrastructure / Repository / Adapter    <back:#2A2A38><color:#C9C9D6>   </color></back> Cross-Use-Case Reference
+  ----
+  <color:#3FCB6B>──►</color> Direct Call      <color:#F2A93B>┄┄►</color> Association / Uses (dependency)
+  <color:#6FA8C9>┄┄►</color> Implementation   <color:#E8973B>◆──</color> Composition (owns lifecycle)
+endlegend
+
+@enduml
