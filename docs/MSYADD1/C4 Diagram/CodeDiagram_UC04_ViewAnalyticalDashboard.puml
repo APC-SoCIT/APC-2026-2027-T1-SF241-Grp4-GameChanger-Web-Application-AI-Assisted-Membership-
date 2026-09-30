@@ -1,0 +1,215 @@
+@startuml
+
+' ══════════════════════════════════════════════════════════
+' DARK THEME — matched to the professor's C4 Level 4 style
+' ══════════════════════════════════════════════════════════
+skinparam backgroundColor #10121A
+skinparam defaultFontName Arial
+skinparam defaultFontColor #E8E8ED
+skinparam defaultFontSize 10
+skinparam shadowing false
+skinparam roundCorner 14
+skinparam linetype ortho
+skinparam nodesep 14
+skinparam ranksep 30
+
+skinparam ArrowFontColor #C9CDD6
+skinparam ArrowFontSize 9
+skinparam ArrowThickness 1.3
+
+skinparam package {
+  FontColor #F0F0F5
+  FontSize 12
+  FontStyle bold
+  BorderThickness 1.6
+  BackgroundColor #171A24
+}
+
+skinparam class {
+  FontColor #FFFFFF
+  FontSize 10
+  FontStyle bold
+  AttributeFontColor #E9E9EE
+  AttributeFontSize 9
+  AttributeFontStyle plain
+  StereotypeFontColor #FFFFFF
+  StereotypeFontSize 8
+  BorderThickness 1.2
+}
+skinparam interface {
+  FontColor #FFFFFF
+  FontSize 10
+  FontStyle bold
+  AttributeFontColor #E9E9EE
+  AttributeFontSize 9
+  StereotypeFontColor #FFFFFF
+  BorderThickness 1.2
+}
+skinparam enum {
+  FontColor #FFFFFF
+  FontSize 10
+  FontStyle bold
+  AttributeFontColor #E9E9EE
+  AttributeFontSize 9
+  StereotypeFontColor #FFFFFF
+  BorderThickness 1.2
+}
+
+title <b><size:15><color:#FFFFFF>C4 MODEL — LEVEL 4 (CODE DIAGRAM)</color></size></b>\n<b><size:19><color:#FFFFFF>HR GameChanger: View Analytical Dashboard Use Case</color></size></b>\n<back:#3B3F8C><color:#FFFFFF>  Next.js 15 API Routes  </color></back>  <back:#1E6E62><color:#FFFFFF>  Supabase / PostgreSQL  </color></back>  <back:#8A5A1E><color:#FFFFFF>  PDF/CSV Export  </color></back>\n
+
+package "PACKAGE 1: PRESENTATION & REST API CONTROLLERS  (Next.js API Routes)" #1E1830;line:9D7BF0 {
+
+  class "MemberDashboardController" as MEM_DASH_CTRL <<REST Controller>> #6C4FD1;line:B49CFA;text:FFFFFF {
+    + getMyDashboard(memberId: UUID, range: DateRange): DashboardDTO
+    + exportMyReport(memberId: UUID, format: ReportFormat): FileStreamDTO
+  }
+
+  class "AdminDashboardController" as ADMIN_DASH_CTRL <<REST Controller>> #6C4FD1;line:B49CFA;text:FFFFFF {
+    + getOrgDashboard(filters: DashboardFilters): DashboardDTO
+  }
+
+  class "ReportController" as REPORT_CTRL <<REST Controller>> #6C4FD1;line:B49CFA;text:FFFFFF {
+    + generateReport(filters: ReportFilters, format: ReportFormat): FileStreamDTO
+  }
+}
+
+package "PACKAGE 2: APPLICATION SUPPORT SERVICES  (Middleware / Cross-Cutting)" #103331;line:2FD9C4 {
+
+  class "DateRangeFilterService" as RANGE_SVC <<Service>> #17958A;line:2FD9C4;text:FFFFFF {
+    + resolveRange(preset: string): DateRange
+  }
+
+  class "ExportAuthorizationGuard" as EXPORT_GUARD <<Middleware>> #17958A;line:2FD9C4;text:FFFFFF {
+    + requireExportPermission(session: AuthSession): void
+  }
+
+  class "ChartDataFormatter" as CHART_FMT <<Service>> #17958A;line:2FD9C4;text:FFFFFF {
+    + toHeatmapSeries(rows): ChartSeriesDTO
+    + toTrendSeries(rows): ChartSeriesDTO
+  }
+}
+
+package "PACKAGE 3: DOMAIN SERVICE LAYER  (Business Logic)" #0F2B18;line:3FCB6B {
+
+  class "AnalyticsAggregationService" as AGG_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + aggregateMemberMetrics(memberId: UUID, range): MemberMetrics
+    + aggregateOrgMetrics(range: DateRange): OrgMetrics
+  }
+
+  class "LeaderboardService" as LEADER_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + getRanking(memberId: UUID, scope: RankScope): RankingResult
+  }
+
+  class "ReportGenerationService" as REPORT_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + compileReport(filters: ReportFilters): ReportData
+    + renderFile(data: ReportData, format: ReportFormat): FileStream
+  }
+}
+
+package "PACKAGE 4: DOMAIN ENTITIES, VALUE OBJECTS & ENUMS  (Domain Model)" #331F0F;line:E8973B {
+
+  class "MemberMetrics" as MEM_METRICS <<Value Object>> #B5651D;line:E8973B;text:FFFFFF {
+    - totalHoursAttended: number
+    - completedSessions: number
+    - earnedCertificates: number
+    - currentLevel: string
+  }
+
+  class "OrgMetrics" as ORG_METRICS <<Value Object>> #A65E22;line:E8973B;text:FFFFFF {
+    - attendanceByProvince: Record(string, number)
+    - revenueTotal: number
+    - engagementTrend: number[]
+  }
+
+  class "ReportData" as REPORT_DATA <<Entity>> #A65E22;line:E8973B;text:FFFFFF {
+    - id: UUID
+    - generatedAt: Date
+    - filters: ReportFilters
+    - rows: ReportRow[]
+  }
+
+  enum "ReportFormat" as FORMAT_ENUM <<Enum>> #8C5A2E;line:E8973B;text:FFFFFF {
+    PDF
+    CSV
+  }
+
+  enum "RankScope" as RANK_SCOPE_ENUM <<Enum>> #8C5A2E;line:E8973B;text:FFFFFF {
+    PROVINCE
+    EXPERTISE_AREA
+  }
+}
+
+package "PACKAGE 5: INFRASTRUCTURE, REPOSITORIES & EXTERNAL ADAPTERS  ()" #1B222B;line:6FA8C9 {
+
+  interface "IAnalyticsRepository" as IANALYTICS_REPO <<Interface>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + queryMemberMetrics(memberId, range): ResultSet
+    + queryOrgMetrics(range: DateRange): ResultSet
+  }
+
+  class "SupabaseAnalyticsRepository" as SUPA_ANALYTICS_REPO <<Repository>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + queryMemberMetrics(memberId, range): ResultSet
+    + queryOrgMetrics(range: DateRange): ResultSet
+  }
+
+  class "PdfExportAdapter" as PDF_ADAPTER <<Adapter>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + render(data: ReportData): FileStream
+  }
+
+  class "CsvExportAdapter" as CSV_ADAPTER <<Adapter>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + render(data: ReportData): FileStream
+  }
+}
+
+' ── Cross-use-case references ──
+class "Manage Session (UC-02)" as UC02_STUB <<external UC>> #2A2A38;line:6B6B80;text:C9C9D6 {
+}
+class "Manage Payment (UC-03)" as UC03_STUB <<external UC>> #2A2A38;line:6B6B80;text:C9C9D6 {
+}
+class "Manage E-Certificate (UC-05)" as UC05_STUB <<external UC>> #2A2A38;line:6B6B80;text:C9C9D6 {
+}
+
+' ── Relationships ──
+MEM_DASH_CTRL -[#3FCB6B]-> RANGE_SVC : "resolveRange()"
+MEM_DASH_CTRL -[#3FCB6B]-> AGG_SVC : "aggregateMemberMetrics()"
+MEM_DASH_CTRL -[#3FCB6B]-> REPORT_SVC : "compileReport() (export)"
+ADMIN_DASH_CTRL -[#3FCB6B]-> AGG_SVC : "aggregateOrgMetrics()"
+ADMIN_DASH_CTRL -[#3FCB6B]-> CHART_FMT : "toHeatmapSeries()"
+REPORT_CTRL -[#3FCB6B]-> EXPORT_GUARD : "requireExportPermission()"
+REPORT_CTRL -[#3FCB6B]-> REPORT_SVC : "compileReport() / renderFile()"
+AGG_SVC .[#F2A93B].> LEADER_SVC : "ranking lookups"
+AGG_SVC .[#F2A93B].> UC02_STUB : "reads attendance/session data"
+AGG_SVC .[#F2A93B].> UC03_STUB : "reads payment/revenue data"
+AGG_SVC .[#F2A93B].> UC05_STUB : "reads certificate-issuance data"
+AGG_SVC .[#F2A93B].> MEM_METRICS : "produces"
+AGG_SVC .[#F2A93B].> ORG_METRICS : "produces"
+REPORT_SVC .[#F2A93B].> REPORT_DATA : "produces"
+REPORT_DATA .[#F2A93B].> FORMAT_ENUM
+LEADER_SVC .[#F2A93B].> RANK_SCOPE_ENUM
+AGG_SVC -[#3FCB6B]-> IANALYTICS_REPO : "queryMemberMetrics() / queryOrgMetrics()"
+SUPA_ANALYTICS_REPO .[#6FA8C9].|> IANALYTICS_REPO : "implementation"
+REPORT_SVC -[#3FCB6B]-> PDF_ADAPTER : "renderFile(PDF)"
+REPORT_SVC -[#3FCB6B]-> CSV_ADAPTER : "renderFile(CSV)"
+
+' ── Hidden layout anchors: force Package 1+2 (top row) -> 3 -> 4 -> 5 (bottom), full-width stacking like the reference diagram ──
+MEM_DASH_CTRL -[hidden]-> AGG_SVC
+RANGE_SVC -[hidden]-> AGG_SVC
+AGG_SVC -[hidden]-> MEM_METRICS
+MEM_METRICS -[hidden]-> IANALYTICS_REPO
+
+' ── Pin cross-use-case stubs below Package 5 so they don't float mid-diagram ──
+IANALYTICS_REPO -[hidden]-> UC02_STUB
+IANALYTICS_REPO -[hidden]-> UC03_STUB
+IANALYTICS_REPO -[hidden]-> UC05_STUB
+
+legend bottom
+  <b><color:#FFFFFF>DIAGRAM CONVENTIONS & ARCHITECTURAL PATTERNS</color></b>
+  ----
+  <back:#6C4FD1><color:#FFFFFF>   </color></back> Presentation / REST Controller    <back:#17958A><color:#FFFFFF>   </color></back> Application Support Service (cross-cutting)
+  <back:#1C8A46><color:#FFFFFF>   </color></back> Domain Service (business logic)   <back:#B5651D><color:#FFFFFF>   </color></back> Domain Entity / Value Object / Enum
+  <back:#2E5F7A><color:#FFFFFF>   </color></back> Infrastructure / Repository / Adapter    <back:#2A2A38><color:#C9C9D6>   </color></back> Cross-Use-Case Reference
+  ----
+  <color:#3FCB6B>──►</color> Direct Call      <color:#F2A93B>┄┄►</color> Association / Uses (dependency)
+  <color:#6FA8C9>┄┄►</color> Implementation   <color:#E8973B>◆──</color> Composition (owns lifecycle)
+endlegend
+
+@enduml

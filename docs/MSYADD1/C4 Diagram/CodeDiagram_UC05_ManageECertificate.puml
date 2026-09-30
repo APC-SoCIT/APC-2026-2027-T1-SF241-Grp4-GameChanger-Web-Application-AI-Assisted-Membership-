@@ -1,0 +1,218 @@
+@startuml
+
+' ══════════════════════════════════════════════════════════
+' DARK THEME — matched to the professor's C4 Level 4 style
+' ══════════════════════════════════════════════════════════
+skinparam backgroundColor #10121A
+skinparam defaultFontName Arial
+skinparam defaultFontColor #E8E8ED
+skinparam defaultFontSize 10
+skinparam shadowing false
+skinparam roundCorner 14
+skinparam linetype ortho
+skinparam nodesep 14
+skinparam ranksep 30
+
+skinparam ArrowFontColor #C9CDD6
+skinparam ArrowFontSize 9
+skinparam ArrowThickness 1.3
+
+skinparam package {
+  FontColor #F0F0F5
+  FontSize 12
+  FontStyle bold
+  BorderThickness 1.6
+  BackgroundColor #171A24
+}
+
+skinparam class {
+  FontColor #FFFFFF
+  FontSize 10
+  FontStyle bold
+  AttributeFontColor #E9E9EE
+  AttributeFontSize 9
+  AttributeFontStyle plain
+  StereotypeFontColor #FFFFFF
+  StereotypeFontSize 8
+  BorderThickness 1.2
+}
+skinparam interface {
+  FontColor #FFFFFF
+  FontSize 10
+  FontStyle bold
+  AttributeFontColor #E9E9EE
+  AttributeFontSize 9
+  StereotypeFontColor #FFFFFF
+  BorderThickness 1.2
+}
+skinparam enum {
+  FontColor #FFFFFF
+  FontSize 10
+  FontStyle bold
+  AttributeFontColor #E9E9EE
+  AttributeFontSize 9
+  StereotypeFontColor #FFFFFF
+  BorderThickness 1.2
+}
+
+title <b><size:15><color:#FFFFFF>C4 MODEL — LEVEL 4 (CODE DIAGRAM)</color></size></b>\n<b><size:19><color:#FFFFFF>HR GameChanger: Manage E-Certificate Use Case</color></size></b>\n<back:#3B3F8C><color:#FFFFFF>  Next.js 15 API Routes  </color></back>  <back:#1E6E62><color:#FFFFFF>  Supabase / PostgreSQL  </color></back>  <back:#8A5A1E><color:#FFFFFF>  PDF Generation  </color></back>\n
+
+package "PACKAGE 1: PRESENTATION & REST API CONTROLLERS  (Next.js API Routes)" #1E1830;line:9D7BF0 {
+
+  class "CertificateController" as CERT_CTRL <<REST Controller>> #6C4FD1;line:B49CFA;text:FFFFFF {
+    + listMyCertificates(memberId: UUID, filters): CertificateSummaryDTO[]
+    + downloadCertificate(certId: UUID): FileStreamDTO
+    + shareToLinkedIn(certId: UUID): LinkedInShareDTO
+    + copyVerificationLink(certId: UUID): string
+  }
+
+  class "CertificateAdminController" as CERT_ADMIN_CTRL <<REST Controller>> #6C4FD1;line:B49CFA;text:FFFFFF {
+    + uploadTemplate(sessionId: UUID, file, meta: TemplateMetaDTO): void
+    + getAttendanceReport(sessionId: UUID): AttendanceReportDTO
+    + releaseCertificates(sessionId: UUID): CertificateBatchDTO
+  }
+}
+
+package "PACKAGE 2: APPLICATION SUPPORT SERVICES  (Middleware / Cross-Cutting)" #103331;line:2FD9C4 {
+
+  class "CertificateEligibilityChecker" as ELIGIBILITY_SVC <<Validator>> #17958A;line:2FD9C4;text:FFFFFF {
+    + isEligible(memberId, sessionId: UUID): boolean
+  }
+
+  class "PdfRenderingService" as PDF_RENDER_SVC <<Service>> #17958A;line:2FD9C4;text:FFFFFF {
+    + mergeTemplate(template: CertificateTemplate, data): PdfBuffer
+  }
+
+  class "VerificationLinkService" as VERIFY_LINK_SVC <<Service>> #17958A;line:2FD9C4;text:FFFFFF {
+    + generateVerificationId(certId: UUID): string
+    + resolveVerificationLink(verifyId: string): CertificateDTO
+  }
+}
+
+package "PACKAGE 3: DOMAIN SERVICE LAYER  (Business Logic)" #0F2B18;line:3FCB6B {
+
+  class "CertificateService" as CERT_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + issueCertificate(memberId, sessionId: UUID): Certificate
+    + getCertificatesForMember(memberId: UUID): Certificate[]
+  }
+
+  class "CertificateTemplateService" as TEMPLATE_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + uploadTemplate(sessionId: UUID, file, meta): CertificateTemplate
+    + getTemplate(sessionId: UUID): CertificateTemplate
+  }
+
+  class "CertificateBatchService" as BATCH_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + releaseForSession(sessionId: UUID): Certificate[]
+  }
+}
+
+package "PACKAGE 4: DOMAIN ENTITIES, VALUE OBJECTS & ENUMS  (Domain Model)" #331F0F;line:E8973B {
+
+  class "Certificate" as CERT <<Aggregate Root>> #B5651D;line:E8973B;text:FFFFFF {
+    - id: UUID
+    - memberId: UUID
+    - sessionId: UUID
+    - sessionTitle: string
+    - issuedAt: Date
+    - verificationId: string
+    - status: CertificateStatus
+    --
+    + issue(): void
+    + revoke(): void
+  }
+
+  class "CertificateTemplate" as TEMPLATE <<Entity>> #A65E22;line:E8973B;text:FFFFFF {
+    - id: UUID
+    - sessionId: UUID
+    - pdfUrl: string
+    - speakerName: string
+    - sessionTitle: string
+  }
+
+  class "VerificationBadge" as VERIFY_BADGE <<Value Object>> #A65E22;line:E8973B;text:FFFFFF {
+    - verificationId: string
+    - verificationUrl: string
+  }
+
+  enum "CertificateStatus" as CERT_STATUS_ENUM <<Enum>> #8C5A2E;line:E8973B;text:FFFFFF {
+    LOCKED
+    ISSUED
+    REVOKED
+  }
+}
+
+package "PACKAGE 5: INFRASTRUCTURE, REPOSITORIES & EXTERNAL ADAPTERS  ()" #1B222B;line:6FA8C9 {
+
+  interface "ICertificateRepository" as ICERT_REPO <<Interface>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + findByMember(memberId: UUID): Certificate[]
+    + save(cert: Certificate): void
+  }
+
+  class "SupabaseCertificateRepository" as SUPA_CERT_REPO <<Repository>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + findByMember(memberId: UUID): Certificate[]
+    + save(cert: Certificate): void
+  }
+
+  class "SupabaseTemplateRepository" as SUPA_TEMPLATE_REPO <<Repository>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + findBySession(sessionId: UUID): CertificateTemplate
+    + save(template: CertificateTemplate): void
+  }
+
+  class "PdfGeneratorAdapter" as PDF_GEN_ADAPTER <<Adapter>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + generate(template, data): PdfBuffer
+  }
+
+  class "LinkedInShareAdapter" as LINKEDIN_ADAPTER <<Adapter>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + buildShareUrl(cert: Certificate): string
+  }
+}
+
+' ── Cross-use-case references ──
+class "Manage Session (UC-02)" as UC02_STUB <<external UC>> #2A2A38;line:6B6B80;text:C9C9D6 {
+}
+class "Manage Dashboard and Reports (UC-04)" as UC04_STUB <<external UC>> #2A2A38;line:6B6B80;text:C9C9D6 {
+}
+
+' ── Relationships ──
+CERT_CTRL -[#3FCB6B]-> CERT_SVC : "getCertificatesForMember()"
+CERT_CTRL -[#3FCB6B]-> VERIFY_LINK_SVC : "copyVerificationLink()"
+CERT_ADMIN_CTRL -[#3FCB6B]-> TEMPLATE_SVC : "uploadTemplate()"
+CERT_ADMIN_CTRL -[#3FCB6B]-> ELIGIBILITY_SVC : "getAttendanceReport()"
+CERT_ADMIN_CTRL -[#3FCB6B]-> BATCH_SVC : "releaseCertificates()"
+UC02_STUB .[#F2A93B].> ELIGIBILITY_SVC : "attendance/completion state from Track C"
+BATCH_SVC .[#F2A93B].> PDF_RENDER_SVC : "mergeTemplate() per attendee"
+CERT_SVC .[#F2A93B].> VERIFY_LINK_SVC : "generateVerificationId()"
+CERT_SVC .[#F2A93B].> UC04_STUB : "certificate references aggregated by"
+CERT_SVC .[#F2A93B].> CERT : "creates / mutates"
+TEMPLATE_SVC .[#F2A93B].> TEMPLATE : "creates"
+BATCH_SVC .[#F2A93B].> CERT : "issues in bulk"
+CERT *-[#E8973B]- VERIFY_BADGE
+CERT .[#F2A93B].> CERT_STATUS_ENUM
+CERT_SVC -[#3FCB6B]-> ICERT_REPO : "findByMember() / save()"
+TEMPLATE_SVC -[#3FCB6B]-> SUPA_TEMPLATE_REPO : "findBySession() / save()"
+SUPA_CERT_REPO .[#6FA8C9].|> ICERT_REPO : "implementation"
+PDF_RENDER_SVC -[#3FCB6B]-> PDF_GEN_ADAPTER : "generate()"
+CERT_CTRL -[#3FCB6B]-> LINKEDIN_ADAPTER : "buildShareUrl()"
+
+' ── Hidden layout anchors: force Package 1+2 (top row) -> 3 -> 4 -> 5 (bottom), full-width stacking like the reference diagram ──
+CERT_CTRL -[hidden]-> CERT_SVC
+ELIGIBILITY_SVC -[hidden]-> CERT_SVC
+CERT_SVC -[hidden]-> CERT
+CERT -[hidden]-> ICERT_REPO
+
+' ── Pin cross-use-case stubs below Package 5 so they don't float mid-diagram ──
+ICERT_REPO -[hidden]-> UC02_STUB
+ICERT_REPO -[hidden]-> UC04_STUB
+
+legend bottom
+  <b><color:#FFFFFF>DIAGRAM CONVENTIONS & ARCHITECTURAL PATTERNS</color></b>
+  ----
+  <back:#6C4FD1><color:#FFFFFF>   </color></back> Presentation / REST Controller    <back:#17958A><color:#FFFFFF>   </color></back> Application Support Service (cross-cutting)
+  <back:#1C8A46><color:#FFFFFF>   </color></back> Domain Service (business logic)   <back:#B5651D><color:#FFFFFF>   </color></back> Domain Entity / Value Object / Enum
+  <back:#2E5F7A><color:#FFFFFF>   </color></back> Infrastructure / Repository / Adapter    <back:#2A2A38><color:#C9C9D6>   </color></back> Cross-Use-Case Reference
+  ----
+  <color:#3FCB6B>──►</color> Direct Call      <color:#F2A93B>┄┄►</color> Association / Uses (dependency)
+  <color:#6FA8C9>┄┄►</color> Implementation   <color:#E8973B>◆──</color> Composition (owns lifecycle)
+endlegend
+
+@enduml

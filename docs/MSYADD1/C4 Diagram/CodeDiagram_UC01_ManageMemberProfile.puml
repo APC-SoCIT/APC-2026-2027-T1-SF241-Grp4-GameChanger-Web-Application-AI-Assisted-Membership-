@@ -1,0 +1,265 @@
+@startuml
+
+
+skinparam backgroundColor #10121A
+skinparam defaultFontName Arial
+skinparam defaultFontColor #E8E8ED
+skinparam defaultFontSize 10
+skinparam shadowing false
+skinparam roundCorner 14
+skinparam linetype ortho
+skinparam nodesep 14
+skinparam ranksep 30
+
+skinparam ArrowFontColor #C9CDD6
+skinparam ArrowFontSize 9
+skinparam ArrowThickness 1.3
+
+skinparam package {
+  FontColor #F0F0F5
+  FontSize 12
+  FontStyle bold
+  BorderThickness 1.6
+  BackgroundColor #171A24
+}
+
+skinparam class {
+  FontColor #FFFFFF
+  FontSize 10
+  FontStyle bold
+  AttributeFontColor #E9E9EE
+  AttributeFontSize 9
+  AttributeFontStyle plain
+  StereotypeFontColor #FFFFFF
+  StereotypeFontSize 8
+  BorderThickness 1.2
+}
+skinparam interface {
+  FontColor #FFFFFF
+  FontSize 10
+  FontStyle bold
+  AttributeFontColor #E9E9EE
+  AttributeFontSize 9
+  StereotypeFontColor #FFFFFF
+  BorderThickness 1.2
+}
+skinparam enum {
+  FontColor #FFFFFF
+  FontSize 10
+  FontStyle bold
+  AttributeFontColor #E9E9EE
+  AttributeFontSize 9
+  StereotypeFontColor #FFFFFF
+  BorderThickness 1.2
+}
+
+title <b><size:15><color:#FFFFFF>C4 MODEL — LEVEL 4 (CODE DIAGRAM)</color></size></b>\n<b><size:19><color:#FFFFFF>HR GameChanger: Manage Member Profile Use Case</color></size></b>\n<back:#3B3F8C><color:#FFFFFF>  Next.js 15 API Routes  </color></back>  <back:#1E6E62><color:#FFFFFF>  Supabase / PostgreSQL  </color></back>  <back:#8A5A1E><color:#FFFFFF>  Row-Level Security  </color></back>\n
+
+' ══════════════════════════════════════════════════════════
+' PACKAGE 1 — PRESENTATION & REST API CONTROLLERS
+' ══════════════════════════════════════════════════════════
+package "PACKAGE 1: PRESENTATION & REST API CONTROLLERS  (Next.js API Routes)" #1E1830;line:9D7BF0 {
+
+  class "ProfileController" as PROF_CTRL <<REST Controller>> #6C4FD1;line:B49CFA;text:FFFFFF {
+    + getMyProfile(session: AuthSession): ProfileDTO
+    + updateMyProfile(session, payload: ProfileUpdateDTO): ProfileDTO
+  }
+
+  class "MemberDirectoryController" as DIR_CTRL <<REST Controller>> #6C4FD1;line:B49CFA;text:FFFFFF {
+    + listMembers(filters: MemberSearchFilters): MemberSummaryDTO[]
+    + getMemberById(memberId: UUID): ProfileDTO
+  }
+
+  class "MemberAdminController" as ADMIN_CTRL <<REST Controller>> #6C4FD1;line:B49CFA;text:FFFFFF {
+    + updateMember(memberId: UUID, payload): ProfileDTO
+    + addMember(payload: NewMemberDTO): ProfileDTO
+    + archiveMember(memberId: UUID): void
+    + deleteMember(memberId: UUID): void
+  }
+}
+
+' ══════════════════════════════════════════════════════════
+' PACKAGE 2 — APPLICATION SUPPORT SERVICES
+' ══════════════════════════════════════════════════════════
+package "PACKAGE 2: APPLICATION SUPPORT SERVICES  (Middleware / Cross-Cutting)" #103331;line:2FD9C4 {
+
+  class "AuthGuardMiddleware" as AUTH_MW <<Middleware>> #17958A;line:2FD9C4;text:FFFFFF {
+    + verifySession(request: NextRequest): AuthSession
+    + requireRole(session, role: UserRole): void
+  }
+
+  class "ProfileValidationService" as VALID_SVC <<Validator>> #17958A;line:2FD9C4;text:FFFFFF {
+    + validateProfileFields(payload): ValidationResult
+    + validateImageType(file: UploadedFile): boolean
+  }
+
+  class "SessionRefreshService" as SESS_REFRESH <<Service>> #17958A;line:2FD9C4;text:FFFFFF {
+    + refreshSessionOnIdentityChange(userId, fields): void
+  }
+}
+
+' ══════════════════════════════════════════════════════════
+' PACKAGE 3 — DOMAIN SERVICE LAYER
+' ══════════════════════════════════════════════════════════
+package "PACKAGE 3: DOMAIN SERVICE LAYER  (Business Logic)" #0F2B18;line:3FCB6B {
+
+  class "ProfileService" as PROF_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + getProfile(userId: UUID): Profile
+    + updateProfile(userId, changes): Profile
+    + changePassword(userId, newPassword): void
+  }
+
+  class "MemberDirectoryService" as DIR_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + searchMembers(filters): Profile[]
+    + getMemberProfile(memberId: UUID): Profile
+  }
+
+  class "MemberAdminService" as ADMIN_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + editMember(memberId, changes, actorId): Profile
+    + addMember(data, actorId: UUID): Profile
+    + archiveMember(memberId, actorId: UUID): void
+  }
+
+  class "ProfileAuditService" as AUDIT_SVC <<Service>> #1C8A46;line:3FCB6B;text:FFFFFF {
+    + logChange(actorId, targetId, action, changes): void
+  }
+}
+
+' ══════════════════════════════════════════════════════════
+' PACKAGE 4 — DOMAIN ENTITIES, VALUE OBJECTS & ENUMS
+' ══════════════════════════════════════════════════════════
+package "PACKAGE 4: DOMAIN ENTITIES, VALUE OBJECTS & ENUMS  (Domain Model)" #331F0F;line:E8973B {
+
+  class "Profile" as PROFILE <<Aggregate Root>> #B5651D;line:E8973B;text:FFFFFF {
+    - id: UUID
+    - fullName: string
+    - email: string
+    - phoneNumber: string
+    - avatarUrl: string
+    - role: UserRole
+    - status: ProfileStatus
+    - provinceId: number
+    - companyId: number
+    - departmentId: number
+    - position: string
+    --
+    + updateContactInfo(info: ContactInfo): void
+    + archive(): void
+    + restore(): void
+  }
+
+  class "ContactInfo" as CONTACT <<Value Object>> #A65E22;line:E8973B;text:FFFFFF {
+    - phoneNumber: string
+    - email: string
+  }
+
+  class "ProfileAuditLog" as AUDITLOG <<Entity>> #A65E22;line:E8973B;text:FFFFFF {
+    - id: number
+    - actorId: UUID
+    - targetProfileId: UUID
+    - action: AuditAction
+    - changes: JSON
+    - createdAt: Date
+  }
+
+  enum "UserRole" as ROLE_ENUM <<Enum>> #8C5A2E;line:E8973B;text:FFFFFF {
+    MEMBER
+    HR_ADMIN
+  }
+
+  enum "ProfileStatus" as STATUS_ENUM <<Enum>> #8C5A2E;line:E8973B;text:FFFFFF {
+    ACTIVE
+    ARCHIVED
+    DELETED
+  }
+
+  enum "AuditAction" as ACTION_ENUM <<Enum>> #8C5A2E;line:E8973B;text:FFFFFF {
+    CREATED
+    UPDATED
+    ARCHIVED
+    RESTORED
+    DELETED
+  }
+}
+
+' ══════════════════════════════════════════════════════════
+' PACKAGE 5 — INFRASTRUCTURE, REPOSITORIES & EXTERNAL ADAPTERS
+' ══════════════════════════════════════════════════════════
+package "PACKAGE 5: INFRASTRUCTURE, REPOSITORIES & EXTERNAL ADAPTERS" #1B222B;line:6FA8C9 {
+
+  interface "IProfileRepository" as IREPO <<Interface>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + findById(id: UUID): Profile
+    + search(filters): Profile[]
+    + save(profile: Profile): void
+  }
+
+  class "SupabaseProfileRepository" as SUPA_REPO <<Repository>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + findById(id: UUID): Profile
+    + search(filters): Profile[]
+    + save(profile: Profile): void
+  }
+
+  class "SupabaseAuthAdapter" as SUPA_AUTH <<Adapter>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + getSession(request: NextRequest): AuthSession
+    + persistSessionRefresh(userId: UUID): void
+  }
+
+  class "ProfileAuditRepository" as AUDIT_REPO <<Repository>> #2E5F7A;line:6FA8C9;text:FFFFFF {
+    + insert(log: ProfileAuditLog): void
+  }
+}
+
+' ══════════════════════════════════════════════════════════
+' RELATIONSHIPS — colored by type, matching the legend
+' ══════════════════════════════════════════════════════════
+PROF_CTRL -[#3FCB6B]-> AUTH_MW : "verify session"
+DIR_CTRL -[#3FCB6B]-> AUTH_MW : "verify session"
+ADMIN_CTRL -[#3FCB6B]-> AUTH_MW : "verify + require role"
+PROF_CTRL -[#3FCB6B]-> VALID_SVC : "validate payload"
+ADMIN_CTRL -[#3FCB6B]-> VALID_SVC : "validate payload"
+
+PROF_CTRL -[#3FCB6B]-> PROF_SVC : "getProfile() / updateProfile()"
+DIR_CTRL -[#3FCB6B]-> DIR_SVC : "searchMembers()"
+ADMIN_CTRL -[#3FCB6B]-> ADMIN_SVC : "editMember() / addMember()"
+
+PROF_SVC -[#3FCB6B]-> SESS_REFRESH : "on identity change"
+PROF_SVC .[#F2A93B].> AUDIT_SVC : "log change"
+ADMIN_SVC .[#F2A93B].> AUDIT_SVC : "log change"
+ADMIN_SVC -[#3FCB6B]-> DIR_SVC : "<<include>> lookup member"
+
+PROF_SVC .[#F2A93B].> PROFILE : "reads / mutates"
+DIR_SVC .[#F2A93B].> PROFILE : "reads"
+ADMIN_SVC .[#F2A93B].> PROFILE : "reads / mutates"
+AUDIT_SVC .[#F2A93B].> AUDITLOG : "creates"
+PROFILE *-[#E8973B]- CONTACT
+PROFILE .[#F2A93B].> ROLE_ENUM
+PROFILE .[#F2A93B].> STATUS_ENUM
+AUDITLOG .[#F2A93B].> ACTION_ENUM
+
+PROF_SVC -[#3FCB6B]-> IREPO : "findById() / save()"
+DIR_SVC -[#3FCB6B]-> IREPO : "search()"
+ADMIN_SVC -[#3FCB6B]-> IREPO : "findById() / save()"
+AUDIT_SVC -[#3FCB6B]-> AUDIT_REPO : "insert()"
+SESS_REFRESH -[#3FCB6B]-> SUPA_AUTH : "persistSessionRefresh()"
+AUTH_MW -[#3FCB6B]-> SUPA_AUTH : "getSession()"
+
+SUPA_REPO .[#6FA8C9].|> IREPO : "implementation"
+
+' ── Hidden layout anchors: force Package 1+2 (top row) -> 3 -> 4 -> 5 (bottom), full-width stacking like the reference diagram ──
+PROF_CTRL -[hidden]-> PROF_SVC
+AUTH_MW -[hidden]-> PROF_SVC
+PROF_SVC -[hidden]-> PROFILE
+PROFILE -[hidden]-> IREPO
+
+legend bottom
+  <b><color:#FFFFFF>DIAGRAM CONVENTIONS & ARCHITECTURAL PATTERNS</color></b>
+  ----
+  <back:#6C4FD1><color:#FFFFFF>   </color></back> Presentation / REST Controller    <back:#17958A><color:#FFFFFF>   </color></back> Application Support Service (cross-cutting)
+  <back:#1C8A46><color:#FFFFFF>   </color></back> Domain Service (business logic)   <back:#B5651D><color:#FFFFFF>   </color></back> Domain Entity / Value Object / Enum
+  <back:#2E5F7A><color:#FFFFFF>   </color></back> Infrastructure / Repository / Adapter
+  ----
+  <color:#3FCB6B>──►</color> Direct Call      <color:#F2A93B>┄┄►</color> Association / Uses (dependency)
+  <color:#6FA8C9>┄┄►</color> Implementation   <color:#E8973B>◆──</color> Composition (owns lifecycle)
+endlegend
+
+@enduml
